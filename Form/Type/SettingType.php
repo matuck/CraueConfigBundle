@@ -2,15 +2,15 @@
 
 namespace Craue\ConfigBundle\Form\Type;
 
-use Craue\ConfigBundle\Entity\Setting;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * @author Christian Raue <christian.raue@gmail.com>
- * @copyright 2011-2013 Christian Raue
- * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright 2011-2016 Christian Raue
+ * @license http://opensource.org/licenses/mit-license.php MIT License
  */
 class SettingType extends AbstractType {
 
@@ -18,9 +18,11 @@ class SettingType extends AbstractType {
 	 * {@inheritDoc}
 	 */
 	public function buildForm(FormBuilderInterface $builder, array $options) {
-		$builder->add('name', 'hidden');
-		$builder->add('section', 'hidden');
-		$builder->add('value', null, array(
+		$useFqcn = method_exists('Symfony\Component\Form\AbstractType', 'getBlockPrefix');
+
+		$builder->add('name', $useFqcn ? 'Symfony\Component\Form\Extension\Core\Type\HiddenType' : 'hidden');
+		$builder->add('section', $useFqcn ? 'Symfony\Component\Form\Extension\Core\Type\HiddenType' : 'hidden');
+		$builder->add('value', $useFqcn ? 'Symfony\Component\Form\Extension\Core\Type\TextType' : 'text', array(
 			'required' => false,
 		));
 	}
@@ -28,16 +30,30 @@ class SettingType extends AbstractType {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setDefaultOptions(OptionsResolverInterface $resolver) {
+	public function configureOptions(OptionsResolver $resolver) {
 		$resolver->setDefaults(array(
-			'data_class' => get_class(new Setting()),
+			'data_class' => 'Craue\ConfigBundle\Entity\Setting',
 		));
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	public function setDefaultOptions(OptionsResolverInterface $resolver) {
+		$this->configureOptions($resolver);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	public function getName() {
+		return $this->getBlockPrefix();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function getBlockPrefix() {
 		return 'craue_config_setting';
 	}
 

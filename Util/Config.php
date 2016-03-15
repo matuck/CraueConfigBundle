@@ -8,8 +8,8 @@ use Doctrine\ORM\EntityRepository;
 
 /**
  * @author Christian Raue <christian.raue@gmail.com>
- * @copyright 2011-2013 Christian Raue
- * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright 2011-2016 Christian Raue
+ * @license http://opensource.org/licenses/mit-license.php MIT License
  */
 class Config {
 
@@ -25,12 +25,13 @@ class Config {
 
 	public function setEntityManager(EntityManager $em) {
 		$this->em = $em;
+		$this->repo = null;
 	}
 
 	/**
 	 * @param string $name Name of the setting.
 	 * @return string|null Value of the setting.
-	 * @throws \RuntimeException If setting is not defined.
+	 * @throws \RuntimeException If the setting is not defined.
 	 */
 	public function get($name) {
 		$setting = $this->getRepo()->findOneBy(array(
@@ -64,7 +65,7 @@ class Config {
 
 	/**
 	 * @param array $newSettings List of settings (as name => value) to update.
-	 * @throws \RuntimeException If a setting is not defined.
+	 * @throws \RuntimeException If at least one of the settings is not defined.
 	 */
 	public function setMultiple(array $newSettings) {
 		if (empty($newSettings)) {
@@ -73,7 +74,7 @@ class Config {
 
 		$settings = $this->em->createQueryBuilder()
 			->select('s')
-			->from(get_class(new Setting()), 's', 's.name')
+			->from('Craue\ConfigBundle\Entity\Setting', 's', 's.name')
 			->where('s.name IN (:names)')
 			->getQuery()
 			->execute(array('names' => array_keys($newSettings)))
@@ -94,13 +95,29 @@ class Config {
 	 * @return array with name => value
 	 */
 	public function all() {
-		$settings = array();
+		return $this->getAsNamesAndValues($this->getRepo()->findAll());
+	}
 
-		foreach ($this->getRepo()->findAll() as $setting) {
-			$settings[$setting->getName()] = $setting->getValue();
+	/**
+	 * @param string|null $section Name of the section to fetch settings for.
+	 * @return array with name => value
+	 */
+	public function getBySection($section) {
+		return $this->getAsNamesAndValues($this->getRepo()->findBy(array('section' => $section)));
+	}
+
+	/**
+	 * @param Setting[] $entities
+	 * @return array with name => value
+	 */
+	protected function getAsNamesAndValues(array $settings) {
+		$result = array();
+
+		foreach ($settings as $setting) {
+			$result[$setting->getName()] = $setting->getValue();
 		}
 
-		return $settings;
+		return $result;
 	}
 
 	/**
@@ -108,7 +125,7 @@ class Config {
 	 */
 	protected function getRepo() {
 		if ($this->repo === null) {
-			$this->repo = $this->em->getRepository(get_class(new Setting()));
+			$this->repo = $this->em->getRepository('Craue\ConfigBundle\Entity\Setting');
 		}
 
 		return $this->repo;

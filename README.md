@@ -1,19 +1,17 @@
 # Information
 
 CraueConfigBundle manages configuration settings stored in the database and makes them accessible via a service in your
-Symfony2 project. These settings are similar to those defined in `parameters.yml` but can be modified at runtime, e.g.
+Symfony project. These settings are similar to those defined in `parameters.yml` but can be modified at runtime, e.g.
 by an admin user.
 
 # Installation
-
-Please use tag 1.0.0 of this bundle if you need Symfony 2.0.x compatibility.
 
 ## Get the bundle
 
 Let Composer download and install the bundle by running
 
 ```sh
-php composer.phar require craue/config-bundle:~1.1
+php composer.phar require craue/config-bundle:~1.4
 ```
 
 in a shell.
@@ -33,7 +31,7 @@ public function registerBundles() {
 
 ## Create the table
 
-Preferably, you do this by calling
+Preferably you do this by calling
 
 ```sh
 # in a shell
@@ -66,7 +64,7 @@ craue_config_settings:
 ```yaml
 # in app/config/routing.yml
 craue_config_settings_modify:
-  pattern: /settings/modify
+  path: /settings/modify
   defaults:
     _controller: CraueConfigBundle:Settings:modify
 ```
@@ -102,31 +100,32 @@ $this->get('craue_config')->all()
 
 to get an associative array of all defined settings and their values.
 
+```php
+$this->get('craue_config')->getBySection('name-of-a-section')
+```
+
+will fetch only settings with the specified section (or those without a section if explicitly passing `null` for the name).
+
 ## Writing settings
 
 With the same service you can set new values of settings:
 
 ```php
-$this->get('craue_config')->set('name-of-a-settings', 'new value');
+$this->get('craue_config')->set('name-of-a-setting', 'new value');
 $this->get('craue_config')->setMultiple(array('setting-1' => 'foo', 'setting-2' => 'bar'));
 ```
 
 Keep in mind that the setting has to be present, or an exception will be thrown.
 
-# Customization
+## Usage in Twig templates
 
-## Translation
+The Twig extension in this bundle supports reading settings directly in your template.
 
-You can add translations for all settings to be shown in the form by adding them to translation files with the
-`CraueConfigBundle` domain, e.g.
-
-```yaml
-# in app/Resources/translations/CraueConfigBundle/CraueConfigBundle.en.yml
-name-of-a-setting: name of the setting
-
-# in app/Resources/translations/CraueConfigBundle/CraueConfigBundle.de.yml
-name-of-a-setting: Name der Einstellung
+```twig
+{{ craue_setting('name-of-a-setting') }}
 ```
+
+# Customization
 
 ## Redirect to a different page after submitting the built-in form
 
@@ -151,3 +150,16 @@ parameters:
 ```
 
 Settings without a section will be rendered at first. Sections without explicit ordering are rendered at last.
+
+## Translation
+
+You can add translations for all settings (and sections) to be shown in the form by adding them to translation files
+with the `CraueConfigBundle` domain, e.g.
+
+```yaml
+# in app/Resources/CraueConfigBundle/translations/CraueConfigBundle.en.yml
+name-of-a-setting: name of the setting
+
+# in app/Resources/CraueConfigBundle/translations/CraueConfigBundle.de.yml
+name-of-a-setting: Name der Einstellung
+```

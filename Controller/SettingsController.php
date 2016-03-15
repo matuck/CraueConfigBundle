@@ -3,29 +3,30 @@
 namespace Craue\ConfigBundle\Controller;
 
 use Craue\ConfigBundle\Entity\Setting;
-use Craue\ConfigBundle\Form\ModifySettingsForm;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @author Christian Raue <christian.raue@gmail.com>
- * @copyright 2011-2013 Christian Raue
- * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @copyright 2011-2016 Christian Raue
+ * @license http://opensource.org/licenses/mit-license.php MIT License
  */
 class SettingsController extends Controller {
 
-	public function modifyAction() {
+	public function modifyAction(Request $request) {
 		$em = $this->getDoctrine()->getManager();
-		$repo = $em->getRepository(get_class(new Setting()));
+		$repo = $em->getRepository('Craue\ConfigBundle\Entity\Setting');
 		$allStoredSettings = $repo->findAll();
 
 		$formData = array(
 			'settings' => $allStoredSettings,
 		);
 
-		$form = $this->createForm(new ModifySettingsForm(), $formData);
-		$request = $this->get('request');
+		$useFqcn = method_exists('Symfony\Component\Form\AbstractType', 'getBlockPrefix');
+		$form = $this->createForm($useFqcn ? 'Craue\ConfigBundle\Form\ModifySettingsForm' : 'craue_config_modifySettings', $formData);
+
 		if ($request->getMethod() === 'POST') {
-			$form->bind($request);
+			$form->handleRequest($request);
 
 			if ($form->isValid()) {
 				foreach ($formData['settings'] as $formSetting) {
@@ -47,6 +48,7 @@ class SettingsController extends Controller {
 		return $this->render('CraueConfigBundle:Settings:modify.html.twig', array(
 			'form' => $form->createView(),
 			'sections' => $this->getSections($allStoredSettings),
+			'symfonyPriorTo2dot3' => !method_exists($form, 'handleRequest'),
 		));
 	}
 
@@ -80,8 +82,6 @@ class SettingsController extends Controller {
 				return $setting;
 			}
 		}
-
-		return null;
 	}
 
 }
